@@ -3,7 +3,7 @@
 
 import argparse
 import time
-from reads import gdal_line_by_line_read, gdal_full_read, envi_full_read, rio_full_read, envi_full_read_return, netcdf_full_read
+from reads import gdal_line_by_line_read, gdal_full_read, envi_full_read, rio_full_read, envi_full_read_return, netcdf_full_read, netcdf_read_lines, netcdf_read_pixels
 from writes import write_geotiff, write_cog, write_netcdf
 import logging
 import numpy as np
@@ -11,10 +11,13 @@ import os
 
 def timefunc(function, name, function_args):
     st = time.perf_counter()
-    function(*function_args)
+    ret = function(*function_args)
     et = time.perf_counter()
 
-    print(f'{name} completed in: {np.round(et - st,2)} s')
+    if ret is None:
+        print(f'{name} completed in: {np.round(et - st,3)} s')
+    else:
+        print(f'{name} completed in: {np.round((et - st)*ret,3)} s')
 
 
 
@@ -30,7 +33,7 @@ def main():
     timefunc(gdal_line_by_line_read, 'GDAL Line by Line Read', {args.input_file})
     timefunc(gdal_full_read, 'GDAL Full Read', {args.input_file})
     timefunc(envi_full_read, 'ENVI Full Read', {args.input_file})
-    timefunc(rio_full_read, (args.input_file), 'RasterIO Full Read')
+    #timefunc(rio_full_read, 'RasterIO Full Read', {args.input_file})
 
     #dat = envi_full_read_return(args.input_file)
     #print('\n\nGeotiff Reads and Writes\n\n')
@@ -56,10 +59,31 @@ def main():
     #timefunc(write_netcdf, 'NETCDF Write - Uncompressed', (dat, os.path.join(args.scratch_dir, 'netcdf.cf'), 0, None))
     #timefunc(netcdf_full_read, 'NETCDF Full Read', {os.path.join(args.scratch_dir, 'netcdf.cf')})
 
-    for complevel in range(0,9):
+    for complevel in [0,1,4,9]:
         fname = os.path.join(args.scratch_dir, f'netcdf_c{complevel}.cf')
         timefunc(write_netcdf, 'NETCDF Write - Compressed', (dat, fname, complevel, None))
         timefunc(netcdf_full_read, 'NETCDF Full Read', {fname})
+        timefunc(netcdf_read_lines, 'NETCDF Line Read', {fname})
+        timefunc(netcdf_read_pixels, 'NETCDF Pixel Read', (fname, 20))
+
+    print('\n\nNETCDF BIP Orientation\n\n')
+
+    for complevel in [0, 1, 4, 9]:
+        fname = os.path.join(args.scratch_dir, f'netcdf_c{complevel}_bip.cf')
+        timefunc(write_netcdf, 'NETCDF Write - Compressed', (dat, fname, complevel, (1, 1, dat.shape[2])))
+        timefunc(netcdf_full_read, 'NETCDF Full Read', {fname})
+        timefunc(netcdf_read_lines, 'NETCDF Line Read', {fname})
+        timefunc(netcdf_read_pixels, 'NETCDF Pixel Read', (fname, 20))
+
+    print('\n\nNETCDF BIL Orientation\n\n')
+
+    for complevel in [0, 1, 4, 9]:
+        fname = os.path.join(args.scratch_dir, f'netcdf_c{complevel}_bil.cf')
+        timefunc(write_netcdf, 'NETCDF Write - Compressed', (dat, fname, complevel, (1, dat.shape[1], dat.shape[2])))
+        timefunc(netcdf_full_read, 'NETCDF Full Read', {fname})
+        timefunc(netcdf_read_lines, 'NETCDF Line Read', {fname})
+        timefunc(netcdf_read_pixels, 'NETCDF Pixel Read', (fname, 20))
+
 
 
 
