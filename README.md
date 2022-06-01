@@ -5,7 +5,7 @@ Main call:
   python main.py INPUT_FILE SCRATCH_DIR
 ```
 
-Running on a 588 x 1000 x 425 reflectance cube on a mac solid state hardrive.  Single test only.
+Running on a 598 x 1000 x 425 reflectance cube on a mac solid state hardrive.  Single test only.
 
 | Chunk | Compression Rate | Write (s) | Read Full (s) | Read Line by Line (s) | Read Pixel by Pixel (s) | Size (MB) |
 | ----- | ---------------- | --------- | ------------- | --------------------- | ----------------------- | --------- |
